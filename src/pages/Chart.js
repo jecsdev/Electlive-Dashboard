@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { HubConnectionBuilder } from '@microsoft/signalr';
 import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
 
-const COLORS = ['#0088FE', '#ca915a', "#C23237"];
+const COLORS = ['#0088FE', '#74c47a', "#C23237"];
 
 const transformData = (data) => {
   console.log("Datos recibidos:", data); // Verifica qué datos estás recibiendo
@@ -67,24 +67,26 @@ function Chart() {
   const transformedData = transformData(data);
 
   return (
-    <div className="chart">
+    <div className="container">
       <h1>Informe de estadísticas</h1>
-      <PieChart width={400} height={400}>
-        <Pie
-          dataKey="value"
-          data={transformedData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          fill="#8884d8"
-        >
-          {transformedData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index]} />
-          ))}
-        </Pie>
-        <Legend />
-        <Tooltip />
-      </PieChart>
+      <div className='chart'>
+        <PieChart width={400} height={400}>
+          <Pie
+            dataKey="value"
+            data={transformedData}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            fill="#8884d8"
+          >
+            {transformedData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index]} />
+            ))}
+          </Pie>
+          <Legend />
+          <Tooltip />
+        </PieChart>
+      </div>
     </div>
   );
 }
