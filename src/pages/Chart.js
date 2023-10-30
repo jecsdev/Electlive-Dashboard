@@ -3,28 +3,18 @@ import { HubConnectionBuilder } from '@microsoft/signalr';
 import { PieChart, Pie, Cell, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 const COLORS = ['#74c47a', "#C23237"];
-let totalVoters = 0;
-const transformData = (data) => {
-  console.log("Datos recibidos:", data);
-  const votesEffectedLength = data.filter(person => person.isRegistered).length;
-  const registeredVotings = data.length;
-  const votesEffected = votesEffectedLength;
-  const remainingVotes = data.length - votesEffectedLength;
-  totalVoters = registeredVotings
-  console.log("Registrados:", registeredVotings);
-  console.log("Votos efectuados:", votesEffected);
-  console.log("Votos restantes:", remainingVotes)
 
-  return [
-    
-    { name: 'Votos efectuados: ' + votesEffected, value: votesEffected },
-    { name: 'Votos restantes: ' + remainingVotes, value: remainingVotes },
-  ];
-};
+function transformData(data) {
+  return data.reduce((result, person) => {
+    result[person.isRegistered ? 'effected' : 'remaining']++;
+    return result;
+  }, { effected: 0, remaining: 0 });
+}
 
 function Chart() {
   const baseUrl = "https://localhost:44361/votingsStream";
   const [data, setData] = useState([]);
+  const [votes, setVotes] = useState({ effected: 0, remaining: 0 });
 
   useEffect(() => {
     const connection = new HubConnectionBuilder()
@@ -32,67 +22,70 @@ function Chart() {
       .withAutomaticReconnect()
       .build();
 
-    connection.start()
-      .then(() => {
+    const startConnection = async () => {
+      try {
+        await connection.start();
         console.log("Connection established");
-        connection.invoke('GetDataFromDb')
-          .catch(error => {
-            console.error("Error invoking method:", error);
-          });
-      })
-      .catch(error => {
+        connection.invoke('GetDataFromDb').catch(error => console.error("Error invoking method:", error));
+      } catch (error) {
         console.error("Connection failed:", error);
-      });
+      }
+    };
 
     connection.on("Data", function (person) {
       console.log("Received data from server:", person);
       setData(person);
+      const votesData = transformData(person);
+      setVotes(votesData);
     });
 
+    startConnection();
+
     return () => {
-      connection.stop()
-        .then(() => {
-          console.log("Connection stopped");
-        })
-        .catch(error => {
-          console.error("Error stopping connection:", error);
-        });
+      connection.stop().then(() => {
+        console.log("Connection stopped");
+      }).catch(error => {
+        console.error("Error stopping connection:", error);
+      });
     };
   }, []);
 
-  const transformedData = transformData(data);
-
   return (
     <div className="container">
-      <h1>Informe de estadísticas</h1>
-
+      <h1>Estado de las votaciones</h1>
+      <h2>Municipio: Salcedo</h2>
       <div className="chartContainer">
         <div className='chart'>
           <PieChart width={400} height={400}>
             <Pie
               dataKey="value"
-              data={transformedData}
+              data={[
+                { name: 'Votos efectuados: ' + votes.effected, value: votes.effected },
+                { name: 'Votos restantes: ' + votes.remaining, value: votes.remaining }
+              ]}
               cx="50%"
               cy="50%"
               labelLine={false}
               fill="#8884d8"
             >
-              {transformedData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index]} />
-              ))}
+              {votes.effected > 0 && <Cell key="cell-0" fill={COLORS[0]} />}
+              {votes.remaining > 0 && <Cell key="cell-1" fill={COLORS[1]} />}
             </Pie>
             <Legend />
             <Tooltip />
           </PieChart>
           <div className="voters-count">
-            Cantidad de votantes: {totalVoters}
+            Votos totales: {votes.effected + votes.remaining}
           </div>
         </div>
         <div className='chart'>
           <BarChart
             width={700}
             height={400}
-            data={transformedData}
+            data={[
+              { name: 'Votos efectuados: ' + votes.effected, value: votes.effected },
+              { name: 'Votos restantes: ' + votes.remaining, value: votes.remaining }
+            ]}
             margin={{
               top: 5,
               right: 30,
@@ -104,21 +97,19 @@ function Chart() {
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
-            <Bar dataKey="value" fill="#8884d8">
-            {transformedData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index]} /> // Asigna colores personalizados
-            ))}
-            <Legend />
+            <Bar dataKey="value" fill="#8884d8" label="">
+              {votes.effected > 0 && <Cell key="cell-0" fill={COLORS[0]} />}
+              {votes.remaining > 0 && <Cell key="cell-1" fill={COLORS[1]} />}
             </Bar>
           </BarChart>
           <div className="voters-count">
-            Cantidad de votantes: {totalVoters}
+            Cantidad de votantes: {votes.effected + votes.remaining}
           </div>
         </div>
       </div>
-     
     </div>
   );
 }
 
 export default Chart;
+
