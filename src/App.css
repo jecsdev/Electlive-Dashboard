@@ -54,3 +54,9 @@ h1{
   margin-top: 20px;
   justify-content: center;
 }
+
+.zone{
+  position: absolute;
+  left: 8%;
+  font-size: 20px;
+}

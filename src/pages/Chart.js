@@ -53,7 +53,12 @@ function Chart() {
   return (
     <div className="container">
       <h1>Estado de las votaciones</h1>
-      <h2>Municipio: Salcedo</h2>
+      <div className='zone'>
+        <strong><span>Municipio: Salcedo</span></strong><br></br>
+        <strong><span>Recinto: Escuela Villa Amaro</span></strong><br></br>
+        <strong><span>Colegio: 0080</span></strong><br></br>
+      </div>
+      
       <div className="chartContainer">
         <div className='chart'>
           <PieChart width={400} height={400}>
